@@ -145,6 +145,54 @@
   .fetch-swatches{ display:flex; gap:5px; margin-top:1.1rem; }
   .fetch-swatches span{ width:16px; height:16px; border-radius:3px; }
 
+  /* ============ elevation pass (motion + depth, warm-amber, tasteful) ============ */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(60% 50% at 82% -5%, rgba(232,163,61,.10), transparent 60%),
+      radial-gradient(50% 45% at 0% 100%, rgba(138,154,91,.06), transparent 62%);
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.5;
+    background-image:
+      linear-gradient(rgba(242,237,228,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(242,237,228,.022) 1px, transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(80% 60% at 50% 30%, #000, transparent 85%);
+    mask-image:radial-gradient(80% 60% at 50% 30%, #000, transparent 85%);
+    animation:gridDrift 28s linear infinite;
+  }
+  @keyframes gridDrift{ to{ background-position:46px 46px, 46px 46px; } }
+
+  h1.hero-name .last{
+    background:linear-gradient(100deg, var(--amber) 0%, #ffd489 50%, var(--amber) 100%);
+    background-size:200% 100%;
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    animation:sheen 6s ease-in-out infinite;
+  }
+  @keyframes sheen{ 0%,100%{ background-position:0% 0; } 50%{ background-position:100% 0; } }
+
+  .reveal{ opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .reveal.in{ opacity:1; transform:none; }
+
+  .repo-card, .skill-card, .contact-item, .fetch-card{ transition:transform .25s cubic-bezier(.2,.7,.2,1), border-color .25s, box-shadow .25s; }
+  .repo-card:hover, .skill-card:hover, .contact-item:hover{ transform:translateY(-4px); border-color:var(--amber); box-shadow:0 14px 34px rgba(0,0,0,.35); }
+  .fetch-card{ box-shadow:0 18px 44px rgba(0,0,0,.35); }
+  .fetch-card:hover{ transform:translateY(-3px); border-color:rgba(232,163,61,.4); }
+
+  .nav-links a{ position:relative; }
+  .nav-links a::after{ content:""; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:var(--amber); transition:right .22s ease; }
+  .nav-links a:hover::after{ right:0; }
+
+  .link-arrow.primary{ background:var(--amber); color:var(--bg); border:none; border-radius:999px; padding:.6rem 1.1rem; }
+  .link-arrow.primary:hover{ transform:translateY(-2px); box-shadow:0 10px 26px rgba(232,163,61,.32); color:var(--bg); }
+
+  @media (prefers-reduced-motion: reduce){
+    body::after{ animation:none; }
+    h1.hero-name .last{ animation:none; -webkit-text-fill-color:var(--amber); }
+    .reveal{ opacity:1; transform:none; transition:none; }
+  }
+
   /* ============ stack strip ============ */
   .stack-strip{
     border-top:1px solid var(--line); border-bottom:1px solid var(--line);
@@ -457,6 +505,44 @@
     }
   }
   loadRepos();
+
+  /* ---- elevation: rotating role line (types in/out), respects reduced-motion ---- */
+  (function(){
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const el = document.querySelector('.hero-role');
+    if (!el) return;
+    const roles = [
+      'cybersecurity learner · python & bash · arch linux',
+      'reads traffic before reaching for exploits',
+      'small tools that fix one real annoyance',
+      'ships in public, breaks in public, fixes faster',
+    ];
+    let ri = 0, ci = 0, deleting = false;
+    function tick(){
+      const full = roles[ri];
+      el.textContent = full.slice(0, ci);
+      if (!deleting && ci < full.length){ ci++; setTimeout(tick, 42); }
+      else if (!deleting && ci === full.length){ deleting = true; setTimeout(tick, 2600); }
+      else if (deleting && ci > 0){ ci--; setTimeout(tick, 20); }
+      else { deleting = false; ri = (ri + 1) % roles.length; setTimeout(tick, 400); }
+    }
+    setTimeout(tick, 1200);
+  })();
+
+  /* ---- elevation: gentle magnetic tilt on the neofetch card (pointer devices) ---- */
+  (function(){
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const card = document.querySelector('.fetch-card');
+    if (!card || !window.matchMedia('(hover: hover)').matches) return;
+    card.style.willChange = 'transform';
+    card.addEventListener('mousemove', (e) => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - .5;
+      const py = (e.clientY - r.top) / r.height - .5;
+      card.style.transform = `perspective(700px) rotateY(${px * 5}deg) rotateX(${-py * 5}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  })();
 </script>
 </body>
 </html>
